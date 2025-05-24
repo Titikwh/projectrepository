@@ -1,0 +1,140 @@
+Panduan Lengkap: Membuat Codespace Baru dengan PostgreSQL di GitHub
+
+✅ 1. Buat Repository Baru di GitHub
+Nama repo contoh: restaurant-app
+
+Aktifkan Codespaces (dari tombol <> Code > pilih Codespaces)
+
+✅ 2. Buat Struktur Devcontainer
+Di root project, buat folder .devcontainer/ dan tambahkan dua file penting:
+
+File 1: .devcontainer/devcontainer.json , isi dengan skrip:
+{
+  "name": "Python + PostgreSQL",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "settings": {},
+  "extensions": [
+    "ms-python.python",
+    "ms-python.vscode-pylance"
+  ]
+}
+
+File 2: .devcontainer/Dockerfile (opsional, jika ingin extend image)
+
+✅ 3. Buat file docker-compose.yml di Root Repo (di luar folder .devcontainer/), isi dengan skrip:
+
+version: '3'
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/python:3.11
+    volumes:
+      - .:/workspace:cached
+    command: sleep infinity
+    depends_on:
+      - db
+    networks:
+      - dev-network
+
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: adminDigital
+      POSTGRES_PASSWORD: ABjEKEMzG9eEHN2QWRatWBUX
+      POSTGRES_DB: sandbox
+    ports:
+      - "5432:5432"
+    networks:
+      - dev-network
+
+networks:
+  dev-network:
+
+✅ 4. Tambahkan File Python dan Dependencies
+
+File 1: requirements.txt , isi dengan skrip:
+
+psycopg2
+
+diterminal codespace jalankan skrip:
+
+pip install -r requirements.txt
+
+
+✅ 5. Buat Skrip Python: Buat Database Baru
+
+Buat file baru  create_db.py lalu isi dengan skrip:
+
+import psycopg2
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+
+conn = psycopg2.connect(
+    dbname="sandbox",
+    user="adminDigital",
+    password="ABjEKEMzG9eEHN2QWRatWBUX",
+    host="localhost"
+)
+conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+
+cur = conn.cursor()
+cur.execute("CREATE DATABASE restaurant_reviews;")
+cur.close()
+conn.close()
+
+print("Database 'restaurant_reviews' berhasil dibuat.")
+
+Jalankan pada terminal:
+python create_db.py
+
+Hasil yang akan keluar: Database 'restaurant_reviews' berhasil dibuat.
+
+🔁 Penyesuaian Penting
+🔸 Kenapa host="localhost"?
+Karena di GitHub Codespaces kamu hanya punya 1 container yang aktif (dari service: app), dan koneksi ke PostgreSQL terjadi lewat port forwarding, bukan via Docker internal DNS seperti host="db".
+
+📦 Struktur Folder Akhir
+pgsql
+Copy
+Edit
+.
+├── .devcontainer/
+│   ├── devcontainer.json
+│   └── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+├── create_db.py
+
+✅ 6. Menampilkan GUI SQL Tools di Codespace
+   
+1. Install Extensions  SQLtools 
+2. Install Extensions SQLTools PostgreSQL/Redshift Driver atau SQLTools PostgreSQL/Cockroach Driver 
+3. 
+
+
+Apa itu SQLTools PostgreSQL Driver dan kenapa perlu diinstall?
+
+SQLTools itu extension utama yang menyediakan UI dan framework untuk koneksi database di VS Code/Codespace.
+
+Tapi supaya SQLTools bisa berkomunikasi dengan database PostgreSQL, dia butuh driver khusus yang bertugas menerjemahkan perintah SQL ke protokol PostgreSQL.
+
+Driver ini terpisah karena SQLTools juga support banyak jenis database (MySQL, SQLite, MSSQL, dll).
+
+Jadi, kamu harus install driver PostgreSQL secara terpisah agar SQLTools tahu cara “bicara” ke PostgreSQL.
+kalau sudah close codespace lalu buka lagi (restart windows codespace)
+
+2. Restart VS Code / Codespace
+
+3. Coba buat koneksi baru lagi di SQLTools
+   Masukan kredensial koneksi sesuai yang ada di file docker-compose.yml, jangan lupa host="localhost"
+4. Kalau koneksi berhasil akan muncul di menu SQLTools, Postgre SQL One Connection
+5. Klik ikon New SQL File diatas untuk mulai mengolah data
+
+Link brainstorming with ChatGPT:
+https://chatgpt.com/share/682c34e9-e2c4-8005-ac43-321f54256892
+
+
+
+
+
